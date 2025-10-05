@@ -22,14 +22,24 @@
             <div class="card">
                 <h2>QR Code Scanner</h2>
                 <div id="scannerSection">
-                    <video id="qrVideo" width="100%" height="300"></video>
-                    <button id="startScanner" class="btn-primary">Start Scanner</button>
-                    <button id="stopScanner" class="btn-secondary hidden">Stop Scanner</button>
+                    <div class="scanner-container">
+                        <video id="qrVideo" width="100%" height="300"></video>
+                        <div class="scanner-overlay"></div>
+                    </div>
+                    <div class="scanner-controls">
+                        <button id="startScanner" class="btn-primary">Start Scanner</button>
+                        <button id="stopScanner" class="btn-secondary hidden">Stop Scanner</button>
+                    </div>
+                    <p class="scanner-instruction">Point the camera at a prefect's QR code to mark attendance</p>
                 </div>
             </div>
 
             <div class="card">
                 <h2>Today's Present Prefects</h2>
+                <div class="attendance-header">
+                    <span>Total Today: <strong id="totalPresent">0</strong></span>
+                    <button onclick="loadTodaysAttendance()" class="btn-secondary">Refresh</button>
+                </div>
                 <div id="attendanceGrid" class="grid-container">
                     <!-- Today's attendance will be loaded here -->
                 </div>
@@ -39,7 +49,7 @@
 
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+    <script src="lib/jsQR.js"></script>
     <script src="js/firebase-config.js"></script>
     <script src="js/attendance.js"></script>
 </body>
