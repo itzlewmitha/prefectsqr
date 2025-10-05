@@ -1,56 +1,26 @@
-<!DOCTYPE html>
-<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Prefect Attendance</title>
     <link rel="stylesheet" href="css/style.css">
+    
+    <!-- Firebase v9 Modular -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
+        import { getFirestore } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+        
+        const firebaseConfig = {
+            apiKey: "your-api-key",
+            authDomain: "your-project.firebaseapp.com",
+            projectId: "your-project-id",
+            storageBucket: "your-project.appspot.com",
+            messagingSenderId: "your-sender-id",
+            appId: "your-app-id"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        
+        window.db = db;
+    </script>
 </head>
-<body>
-    <div class="container">
-        <header class="header">
-            <h1>Prefect Dashboard</h1>
-            <nav class="nav">
-                <a href="dashboard.html" class="nav-link active">Register Prefect</a>
-                <a href="prefects.html" class="nav-link">View Prefects</a>
-                <a href="attendance.html" class="nav-link">Today's Attendance</a>
-                <button id="logoutBtn" class="btn-secondary">Logout</button>
-            </nav>
-        </header>
-
-        <main class="main-content">
-            <div id="prefectForm" class="card">
-                <h2>Register New Prefect</h2>
-                <form id="prefectFormElement">
-                    <div class="form-group">
-                        <label for="name">Full Name:</label>
-                        <input type="text" id="name" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="grade">Grade:</label>
-                        <input type="text" id="grade" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="admissionNumber">Admission Number:</label>
-                        <input type="text" id="admissionNumber" required>
-                    </div>
-                    <button type="submit" class="btn-primary">Register Prefect</button>
-                </form>
-            </div>
-
-            <div id="qrSection" class="card hidden">
-                <h2>Prefect QR Code</h2>
-                <div id="qrCode"></div>
-                <p>Scan this QR code to mark attendance</p>
-                <button id="newPrefectBtn" class="btn-secondary">Register Another Prefect</button>
-            </div>
-        </main>
-    </div>
-
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.0/build/qrcode.min.js"></script>
-    <script src="js/firebase-config.js"></script>
-    <script src="js/dashboard.js"></script>
-</body>
-</html>
