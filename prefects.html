@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prefects - Attendance System</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>Manage Prefects</h1>
+            <nav class="nav">
+                <a href="dashboard.html" class="nav-link">Register Prefect</a>
+                <a href="prefects.html" class="nav-link active">View Prefects</a>
+                <a href="attendance.html" class="nav-link">Today's Attendance</a>
+                <button id="logoutBtn" class="btn-secondary">Logout</button>
+            </nav>
+        </header>
+
+        <main class="main-content">
+            <div class="card">
+                <h2>All Prefects</h2>
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="Search prefects...">
+                </div>
+                <div id="prefectsGrid" class="grid-container">
+                    <!-- Prefects will be loaded here -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/prefects.js"></script>
+</body>
+</html>
