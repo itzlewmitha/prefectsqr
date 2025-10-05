@@ -1,6 +1,7 @@
 // js/attendance.js
 let videoStream = null;
 let scannerActive = false;
+let scanInterval = null;
 
 document.addEventListener('DOMContentLoaded', function() {
     loadTodaysAttendance();
@@ -8,24 +9,38 @@ document.addEventListener('DOMContentLoaded', function() {
     const startScannerBtn = document.getElementById('startScanner');
     const stopScannerBtn = document.getElementById('stopScanner');
     
-    startScannerBtn.addEventListener('click', startScanner);
-    stopScannerBtn.addEventListener('click', stopScanner);
+    if (startScannerBtn) {
+        startScannerBtn.addEventListener('click', startScanner);
+    }
+    if (stopScannerBtn) {
+        stopScannerBtn.addEventListener('click', stopScanner);
+    }
 });
 
 async function startScanner() {
     try {
-        videoStream = await navigator.mediaDevices.getUserMedia({ 
-            video: { facingMode: "environment" } 
-        });
+        const constraints = {
+            video: { 
+                facingMode: "environment",
+                width: { ideal: 1280 },
+                height: { ideal: 720 }
+            } 
+        };
+        
+        videoStream = await navigator.mediaDevices.getUserMedia(constraints);
         
         const video = document.getElementById('qrVideo');
         video.srcObject = videoStream;
         
-        document.getElementById('startScanner').classList.add('hidden');
-        document.getElementById('stopScanner').classList.remove('hidden');
-        
-        scannerActive = true;
-        scanQRCode();
+        // Wait for video to load
+        video.onloadedmetadata = function() {
+            video.play();
+            document.getElementById('startScanner').classList.add('hidden');
+            document.getElementById('stopScanner').classList.remove('hidden');
+            
+            scannerActive = true;
+            scanInterval = setInterval(scanQRCode, 1000); // Scan every second
+        };
         
     } catch (error) {
         console.error('Error accessing camera:', error);
@@ -36,9 +51,19 @@ async function startScanner() {
 function stopScanner() {
     scannerActive = false;
     
+    if (scanInterval) {
+        clearInterval(scanInterval);
+        scanInterval = null;
+    }
+    
     if (videoStream) {
         videoStream.getTracks().forEach(track => track.stop());
         videoStream = null;
+    }
+    
+    const video = document.getElementById('qrVideo');
+    if (video) {
+        video.srcObject = null;
     }
     
     document.getElementById('startScanner').classList.remove('hidden');
@@ -52,32 +77,41 @@ function scanQRCode() {
     const canvas = document.createElement('canvas');
     const context = canvas.getContext('2d');
     
+    if (video.videoWidth === 0 || video.videoHeight === 0) return;
+    
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
     
     const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-    const code = jsQR(imageData.data, imageData.width, imageData.height);
     
-    if (code) {
-        try {
-            const qrData = JSON.parse(code.data);
-            if (qrData.type === 'prefect_attendance') {
-                markAttendance(qrData.prefectId);
+    try {
+        const code = jsQR(imageData.data, imageData.width, imageData.height, {
+            inversionAttempts: "dontInvert",
+        });
+        
+        if (code) {
+            console.log('QR Code detected:', code.data);
+            try {
+                const qrData = JSON.parse(code.data);
+                if (qrData.type === 'prefect_attendance' && qrData.prefectId) {
+                    stopScanner(); // Stop scanner after successful scan
+                    markAttendance(qrData.prefectId);
+                }
+            } catch (error) {
+                console.error('Error parsing QR code data:', error);
             }
-        } catch (error) {
-            console.error('Error parsing QR code:', error);
         }
-    }
-    
-    if (scannerActive) {
-        requestAnimationFrame(scanQRCode);
+    } catch (error) {
+        console.error('Error scanning QR code:', error);
     }
 }
 
 async function markAttendance(prefectId) {
     try {
+        console.log('Marking attendance for prefect:', prefectId);
+        
         // Get prefect data
         const prefectDoc = await db.collection('prefects').doc(prefectId).get();
         
@@ -89,14 +123,17 @@ async function markAttendance(prefectId) {
         const prefect = prefectDoc.data();
         const today = new Date().toDateString();
         
+        console.log('Prefect found:', prefect.name);
+        console.log('Today date:', today);
+        
         // Check if already marked attendance today
-        const attendanceDoc = await db.collection('attendance')
+        const attendanceQuery = await db.collection('attendance')
             .where('prefectId', '==', prefectId)
             .where('date', '==', today)
             .get();
             
-        if (!attendanceDoc.empty) {
-            alert(`${prefect.name} has already marked attendance today!`);
+        if (!attendanceQuery.empty) {
+            alert(`✅ ${prefect.name} has already marked attendance today!`);
             return;
         }
         
@@ -115,12 +152,12 @@ async function markAttendance(prefectId) {
             totalAttendance: firebase.firestore.FieldValue.increment(1)
         });
         
-        alert(`Attendance marked for ${prefect.name}!`);
+        alert(`🎉 Attendance marked successfully for ${prefect.name}!`);
         loadTodaysAttendance();
         
     } catch (error) {
         console.error('Error marking attendance:', error);
-        alert('Error marking attendance. Please try again.');
+        alert('❌ Error marking attendance. Please try again.');
     }
 }
 
@@ -135,7 +172,7 @@ async function loadTodaysAttendance() {
             .get();
             
         if (snapshot.empty) {
-            attendanceGrid.innerHTML = '<p>No attendance marked today.</p>';
+            attendanceGrid.innerHTML = '<p>No attendance marked today yet.</p>';
             return;
         }
         
@@ -156,11 +193,16 @@ async function loadTodaysAttendance() {
 function createAttendanceElement(attendance) {
     const div = document.createElement('div');
     div.className = 'grid-item';
+    
+    const time = attendance.timestamp ? 
+        new Date(attendance.timestamp.toDate()).toLocaleTimeString() : 
+        'Time not available';
+        
     div.innerHTML = `
         <h3>${attendance.prefectName}</h3>
         <p><strong>Grade:</strong> ${attendance.prefectGrade}</p>
         <p><strong>Admission No:</strong> ${attendance.prefectAdmission}</p>
-        <p><strong>Time:</strong> ${new Date(attendance.timestamp?.toDate()).toLocaleTimeString()}</p>
+        <p><strong>Time:</strong> ${time}</p>
     `;
     return div;
 }
