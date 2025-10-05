@@ -14,6 +14,16 @@ document.addEventListener('DOMContentLoaded', function() {
         const admissionNumber = document.getElementById('admissionNumber').value;
         
         try {
+            // Check if admission number already exists
+            const existingPrefect = await db.collection('prefects')
+                .where('admissionNumber', '==', admissionNumber)
+                .get();
+                
+            if (!existingPrefect.empty) {
+                alert('Prefect with this admission number already exists!');
+                return;
+            }
+            
             // Save prefect to Firestore
             const docRef = await db.collection('prefects').add({
                 name: name,
@@ -24,13 +34,14 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             
             currentPrefectId = docRef.id;
+            console.log('Prefect added with ID:', docRef.id);
             
             // Generate QR code
             await generateQRCode(docRef.id);
             
             // Show QR section and hide form
             prefectForm.reset();
-            prefectForm.style.display = 'none';
+            prefectForm.classList.add('hidden');
             qrSection.classList.remove('hidden');
             
         } catch (error) {
@@ -41,7 +52,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     newPrefectBtn.addEventListener('click', function() {
         qrSection.classList.add('hidden');
-        prefectForm.style.display = 'block';
+        prefectForm.classList.remove('hidden');
     });
 });
 
@@ -65,6 +76,8 @@ function generateQRCode(prefectId) {
         if (error) {
             console.error('QR Code generation error:', error);
             alert('Error generating QR code. Please try again.');
+        } else {
+            console.log('QR code generated successfully for prefect:', prefectId);
         }
     });
 }
